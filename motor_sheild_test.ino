@@ -9,10 +9,10 @@ AF_DCMotor motor4(4);        // Sets up motor 4
 
 // Global Variables
 char input = '-';
-bool forwardBool = false;
-bool backwardBool = false;
-bool leftBool = false;
-bool rightBool = false;
+int forwardNum = 0;
+int backwardNum = 0;
+int leftNum = 0;
+int rightNum = 0;
 void setup() {
   // Sets motor Speed
   int motorSpeed = 2000;
@@ -24,67 +24,81 @@ void setup() {
 
 void translateIR()
 {
-  switch(results.value)
+  switch (results.value)
   {
-  case 0xFFA25D: input = 'p'; break;
-  case 0xFF629D: input = 'f'; break;
-  case 0xFF22DD: input = 'l';   break;
-  case 0xFFC23D: input = 'r'; break;
-  case 0xFFA857: input = 'b';   break;
-  default: 
-    Serial.println(" other button : ");
-    Serial.println(results.value);
+    case 0xFF629D: forward(); break;
+    case 0xFF22DD: right();  break;
+    case 0xFFC23D: left(); break;
+    case 0xFFA857: backward();   break;
+    default:
+      Serial.println(" other button : ");
+      Serial.println(results.value);
   }
   delay(500);
 }
 /**
- * Motor Functions
- * forward backward left right and release
- */
+   Motor Functions
+   forward backward left right and release
+*/
 void forward() {
-  motor3.run(BACKWARD);
-  motor4.run(FORWARD);
+  if (isEven(forwardNum)){
+    motor3.run(BACKWARD);
+    motor4.run(BACKWARD);
+  }
+  else {
+    motor3.run(RELEASE);
+    motor4.run(RELEASE);
+  }
+  forwardNum++;
 }
 void backward() {
-  motor3.run(FORWARD);
-  motor4.run(BACKWARD);
+  if (isEven(backwardNum)){
+    motor3.run(FORWARD);
+    motor4.run(FORWARD);
+  }
+  else {
+    motor3.run(RELEASE);
+    motor4.run(RELEASE);
+  }
+  backwardNum++;
 }
-void left(){
-  motor4.run(FORWARD);
-  motor3.run(FORWARD);
+void left() {
+  motor3.run(RELEASE);
+   motor4.run(RELEASE);
+  if (isEven(leftNum)){
+    motor3.run(BACKWARD);
+  }
+  else {
+    motor3.run(RELEASE);
+  }
+  leftNum++;
 }
-void right(){
-  motor3.run(BACKWARD);
-  motor4.run(BACKWARD);
+void right() {
+  motor3.run(RELEASE);
+   motor4.run(RELEASE);
+  if (isEven(rightNum)){
+    motor4.run(BACKWARD);
+  }
+  else {
+    motor4.run(RELEASE);
+  }
+  rightNum++;
 }
-void release(){
+void releaseMotor(){
+  Serial.println("Release motors");
   motor3.run(RELEASE);
   motor4.run(RELEASE);
 }
+int isEven(int num)
+{
+  return !(num & 1);
 
+}
 void loop() {
   // Get ir input
-  if (irrecv.decode(&results)) 
+  if (irrecv.decode(&results))
   {
-    translateIR(); 
+    translateIR();
     irrecv.resume(); // receive the next value
   }
-  
-  // Control motor depending on inputs
-  switch (input){
-    case 'f':{
-      if (forwardBool == false){release();forward();forwardBool = true;input = '1';}
-      else {release();forwardBool = false;input = '1';}
-    }
-    case 'b':{
-      if (backwardBool == false){release();backward();backwardBool = true;input = '1';}
-      else {release();backwardBool = false;input = '1';}
-    }
-    case 'l':{
-      if (leftBool == false){release();left();leftBool = true;input = '1';}
-      else {release();leftBool = false;input = '1';}
-    }
-    if (rightBool == false){release();right();rightBool = true;input = '1';}
-      else {release();rightBool = false;input = '1';}
-    }
-  }
+}
